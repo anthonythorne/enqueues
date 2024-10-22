@@ -28,7 +28,7 @@ if ( file_exists( $autoload_file ) ) {
 		define( 'Enqueues\\APP_NAME', basename( __FILE__, '.php' ) );
 	}
 
-	$enqueues_app = new \WPMVC\Core\Application(
+	$enqueues_app = new \Enqueues\Base\Main\Application(
 		APP_NAME,
 		__DIR__,
 		[
