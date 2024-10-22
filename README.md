@@ -218,6 +218,10 @@ The Enqueues MU Plugin provides several filters to customize its behavior, allow
 * `enqueues_wp_head_inline_asset`: Filters the array of assets rendered inline in `wp_head`.
 * `enqueues_wp_footer_inline_asset`: Filters the array of assets rendered inline in `wp_footer`.
 
+enqueues_block_editor_dist_dir
+enqueues_block_editor_categories
+enqueues_translation_domain
+
 ## Default Behavior
 * Default Assets: The plugin will default to main.css and main.js if no specific assets are found for a page type or template.
 * jQuery: By default, jQuery is moved to the footer to enhance performance (see filter to change this global or per page).

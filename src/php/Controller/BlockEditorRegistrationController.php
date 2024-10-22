@@ -9,28 +9,17 @@
 
 // phpcs:disable WordPress.Files.FileName
 
-namespace CareToChange\Core\Controller;
+namespace Enqueues\Controller;
 
-use CareToChange\Core\Base\Main\Controller;
+use Enqueues\Base\Main\Controller;
 use function Enqueues\asset_find_file_path;
 use function Enqueues\is_local;
+use function get_translation_domain;
 
 /**
  * Controller responsible for Block Editor related functionality.
  */
 class BlockEditorRegistrationController extends Controller {
-
-	const TRANSLATION_DOMAIN = 'caretochange';
-
-	const BLOCK_NAME_PREFIX = 'caretochange';
-
-	const BLOCK_CATEGORIES = [ 
-		[ 
-			'slug'  => 'caretochange',
-			'title' => 'Care to Change',
-			'icon'  => 'dist/images/caretochange-white-logo.svg', // Path to icon or use dashicons.
-		],
-	];
 
 	/**
 	 * Register hooks.
@@ -47,32 +36,30 @@ class BlockEditorRegistrationController extends Controller {
 	}
 
 	/**
-	 * Register blocks.
+	 * Register Gutenberg blocks by scanning the block directory.
 	 */
 	public function register_blocks() {
-
-		$directory             = get_template_directory();
-		$directory_uri         = get_template_directory_uri();
-		$block_editor_dist_dir = $directory . '/dist/block-editor/blocks';
+		$directory                  = get_template_directory();
+		$block_editor_dist_dir_path = apply_filters( 'enqueues_block_editor_dist_dir', '/dist/block-editor/blocks' );
+		$block_editor_dist_dir      = "{$directory}/{$block_editor_dist_dir_path}";
 
 		if ( ! is_dir( $block_editor_dist_dir ) ) {
 			if ( is_local() ) {
-				wp_die( sprintf( 'Block Editor dist dir %s missing.', $block_editor_dist_dir ), E_USER_ERROR ); // phpcs:ignore
+				wp_die( sprintf( 'Block Editor dist directory %s missing.', $block_editor_dist_dir ), E_USER_ERROR ); // phpcs:ignore
 			}
 			return;
 		}
 
-		$blocks_dirs = array_filter( glob( $block_editor_dist_dir . '/*' ), 'is_dir' );
+		$blocks_dirs       = array_filter( glob( "{$block_editor_dist_dir}/*" ), 'is_dir' );
+		$block_name_prefix = apply_filters( 'enqueues_block_name_prefix', 'custom' );
 
 		foreach ( $blocks_dirs as $block_dir ) {
-			$block_name = self::BLOCK_NAME_PREFIX . '/' . basename( $block_dir );
-
-			// Path to the block metadata file in the dist directory.
-			$metadata_file = $block_editor_dist_dir . '/' . basename( $block_dir ) . '/block.json';
+			$block_name    = basename( $block_dir );
+			$metadata_file = "{$block_editor_dist_dir}/{$block_name}/block.json";
 
 			if ( ! file_exists( $metadata_file ) ) {
 				if ( is_local() ) {
-					wp_die( sprintf( 'Block Editor block metadata file %s is missing.', $metadata_file ), E_USER_ERROR ); // phpcs:ignore
+					wp_die( sprintf( 'Block metadata file %s is missing.', $metadata_file ), E_USER_ERROR ); // phpcs:ignore
 				}
 				continue;
 			}
@@ -80,7 +67,7 @@ class BlockEditorRegistrationController extends Controller {
 			$result = register_block_type( $metadata_file );
 
 			if ( ! $result && is_local() ) {
-				wp_die( sprintf( 'Block Editor block failed to register %s.', $block_name ), E_USER_ERROR ); // phpcs:ignore
+				wp_die( sprintf( 'Block %s failed to register.', "{$block_name_prefix}/{$block_name}" ), E_USER_ERROR ); // phpcs:ignore
 			}
 		}
 	}
@@ -93,12 +80,24 @@ class BlockEditorRegistrationController extends Controller {
 		$directory = get_template_directory();
 		$icon      = null;
 
-		foreach ( self::BLOCK_CATEGORIES as $category ) {
+		$block_editor_categories = apply_filters ( 'enqueues_block_editor_categories', [] );
+
+		if ( ! $block_editor_categories ) {
+			return $categories;
+		}
+
+		foreach ( $block_editor_categories as $category ) {
+
+			// Skip if the category is not properly defined.
+			if ( ! isset( $category['slug'] ) || ! isset( $category['title'] ) ) {
+				continue;
+			}
+
 			if ( isset( $category['icon'] ) ) {
 
 				$icon = $category['icon'];
 
-				$svg_file = $directory . $icon;
+				$svg_file = "{$directory}{$icon}";
 
 				if ( file_exists( $svg_file ) ) {
 
@@ -115,7 +114,7 @@ class BlockEditorRegistrationController extends Controller {
 					}
 				}
 
-				$category['title'] = __( $category['title'], self::TRANSLATION_DOMAIN ); // phpcs:ignore
+				$category['title'] = __( $category['title'], get_translation_domain() ); // phpcs:ignore
 				$category['icon']  = $icon;
 			}
 
@@ -150,6 +149,7 @@ class BlockEditorRegistrationController extends Controller {
 			if ( $css_path ) {
 				wp_register_style( "{$name}-{$css_filetype}", rtrim( $directory_uri, '/' ) . $css_path, 'all', filemtime( $directory . $css_path ) );
 
+				// Enqueue the CSS bundle for the asset if its not set to register only. Register only is used for localization of vars.
 				if ( ! $register_only ) {
 					wp_enqueue_script( "{$name}-{$css_filetype}" );
 				}
@@ -167,12 +167,19 @@ class BlockEditorRegistrationController extends Controller {
 
 					wp_register_script( "{$name}-{$js_filetype}", rtrim( $directory_uri, '/' ) . $js_path, $assets['dependencies'], $assets['version'], true );
 
+					// Enqueue the JS bundle for the asset if its not set to register only. Register only is used for localization of vars.
 					if ( ! $register_only ) {
 						wp_enqueue_script( "{$name}-{$js_filetype}" );
 					}
 
-					$localized_data     = 'plugins' === $type ? $this->get_localized_plugin_params() : $this->get_localized_extension_params();
-					$localized_var_name = 'customBlockEditor' . ucfirst( $type ) . 'Config';
+					$localized_data     = apply_filters( "enqueues_block_editor_localized_data_{$type}_{$name}", [], $filename );
+					$localized_var_name = apply_filters( "enqueues_block_editor_localized_data_var_name_{$type}_{$name}", 'customBlockEditor' . ucfirst( $type ) . 'Config' );
+
+					// Skip if the localized data is empty.
+					if ( ! $localized_data ) {
+						continue;
+					}
+
 					wp_localize_script( "{$name}-{$js_filetype}", $localized_var_name, $localized_data );
 				} elseif ( is_local() ) {
 					wp_die( sprintf( 'Run npm build for the Block Editor asset files, the %s file is missing.', $enqueue_asset_path ), E_USER_ERROR ); // phpcs:ignore
@@ -217,30 +224,6 @@ class BlockEditorRegistrationController extends Controller {
 	 */
 	public function enqueue_extensions_admin() {
 		$this->enqueue_assets( 'extensions', 'editor', false );
-	}
-
-	/**
-	 * Returns variables used within the JS.
-	 *
-	 * @return array
-	 */
-	public function get_localized_plugin_params() {
-
-		$params = [];
-
-		return $params;
-	}
-
-	/**
-	 * Returns variables used within the JS.
-	 *
-	 * @return array
-	 */
-	public function get_localized_extension_params() {
-
-		$params = [];
-
-		return $params;
 	}
 
 	/**
