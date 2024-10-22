@@ -35,6 +35,7 @@ if ( file_exists( $autoload_file ) ) {
 			new \Enqueues\Controller\ThemeEnqueueMainController(),
 			new \Enqueues\Controller\ThemeEnqueueJqueryController(),
 			new \Enqueues\Controller\ThemeInlineAssetController(),
+			new \Enqueues\Controller\BlockEditorRegistrationController(),
 		]
 	);
 
