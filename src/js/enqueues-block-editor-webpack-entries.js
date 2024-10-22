@@ -84,9 +84,6 @@ const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcD
 
     console.log('Generated Entries from Enqueues Block Editor Webpack Entries:', mergedEntries);
 
-	//error
-	exit;
-
     return mergedEntries;
 };
 
