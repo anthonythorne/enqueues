@@ -14,11 +14,10 @@ const enqueuesMergeWebpackEntries = require('./enqueues-merge-webpack-entries');
  * @param {string} [cssFileExt='scss'] - File extension for CSS files.
  * @description A function to dynamically resolve and group entry points for Webpack configuration.
  */
-const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcDirJS = 'src/js', srcDirCSS = 'src/sass', cssFileExt = 'scss') => {
+const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcDir = 'src/block-editor') => {
     // Log for debugging
-    console.log('rootDir:', rootDir);
-    console.log('srcDirJS:', srcDirJS);
-    console.log('srcDirCSS:', srcDirCSS);
+    console.log('enqueuesBlockEditorWebpackEntries rootDir:', rootDir);
+    console.log('enqueuesBlockEditorWebpackEntries srcDir:', srcDir);
 
     const safeGlobSync = (pattern) => {
         try {
@@ -52,7 +51,7 @@ const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcD
                 ? 'view'
                 : '';
 
-        return safeGlobSync(`${rootDir}/source/editor/${type}/*/${fileGlob}.${fileExt}`)
+        return safeGlobSync(`${rootDir}/${srcDir}/${type}/*/${fileGlob}.${fileExt}`)
             .reduce((obj, el) => {
                 const name = pathModule.basename(pathModule.dirname(el));
                 obj[`${type}/${name}/${fileGlob}`] = el;
@@ -60,27 +59,22 @@ const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcD
             }, {});
     };
 
-    // Resolve JS and CSS entries for blocks
-    const entryBlocksJSAndCSS = { ...getBlockEditorEntries('blocks', 'js-editor', 'js') };
-    const entryPluginsJSAndCSS = { ...getBlockEditorEntries('plugins', 'js-editor', 'js') };
-    const entryExtensionsJSAndCSS = { ...getBlockEditorEntries('extensions', 'js-editor', 'js') };
-
-    // Merge all JS and CSS entries for blocks, plugins, and extensions
+    // Merge all JS and CSS entries for blocks, plugins, and extensions.
     const mergedEntries = enqueuesMergeWebpackEntries(
-        entryBlocksJSAndCSS,
+        getBlockEditorEntries('blocks', 'js-editor', 'js'),
         getBlockEditorEntries('blocks', 'js-script', 'js'),
         getBlockEditorEntries('blocks', 'js-view', 'js'),
         getBlockEditorEntries('blocks', 'css-editor', 'scss'),
         getBlockEditorEntries('blocks', 'css-style', 'scss'),
         getBlockEditorEntries('blocks', 'css-view', 'scss'),
 
-        entryPluginsJSAndCSS,
+        getBlockEditorEntries('plugins', 'js-editor', 'js'),
         getBlockEditorEntries('plugins', 'js-script', 'js'),
         getBlockEditorEntries('plugins', 'js-view', 'js'),
         getBlockEditorEntries('plugins', 'css-style', 'scss'),
         getBlockEditorEntries('plugins', 'css-view', 'scss'),
 
-        entryExtensionsJSAndCSS,
+        getBlockEditorEntries('extensions', 'js-editor', 'js'),
         getBlockEditorEntries('extensions', 'js-script', 'js'),
         getBlockEditorEntries('extensions', 'js-view', 'js'),
         getBlockEditorEntries('extensions', 'css-editor', 'scss'),
@@ -88,7 +82,10 @@ const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcD
         getBlockEditorEntries('extensions', 'css-view', 'scss')
     );
 
-    console.log('Generated merged entries:', mergedEntries);
+    console.log('Generated Entries from Enqueues Block Editor Webpack Entries:', mergedEntries);
+
+	//error
+	exit;
 
     return mergedEntries;
 };
