@@ -3,12 +3,12 @@
  */
 
 /**
- * @function enqueuesMergeThemeWebpackEntries
+ * @function enqueuesMergeWebpackEntries
  * @param {...object} entriesObjects - Multiple entries objects to be merged.
  * @description Merges multiple entries objects into one. If a key is already present, it groups multiple entries into an array.
  * @return {object} - The merged entries object.
  */
-const enqueuesMergeThemeWebpackEntries = (...entriesObjects) => {
+const enqueuesMergeWebpackEntries = (...entriesObjects) => {
     const mergedEntries = {};
 
     entriesObjects.forEach(entriesObj => {
@@ -31,4 +31,4 @@ const enqueuesMergeThemeWebpackEntries = (...entriesObjects) => {
     return mergedEntries;
 };
 
-module.exports = enqueuesMergeThemeWebpackEntries;
+module.exports = enqueuesMergeWebpackEntries;
