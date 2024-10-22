@@ -20,6 +20,14 @@ const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcD
     console.log('srcDirJS:', srcDirJS);
     console.log('srcDirCSS:', srcDirCSS);
 
+    const safeGlobSync = (pattern) => {
+        try {
+            return globModule.sync(pattern);
+        } catch (error) {
+            console.error(`Failed to resolve pattern: ${pattern}`, error);
+            return [];
+        }
+    };
 
     /**
      * @function getBlockEditorEntries
@@ -44,10 +52,9 @@ const enqueuesBlockEditorWebpackEntries = (rootDir, pathModule, globModule, srcD
                 ? 'view'
                 : '';
 
-        return glob
-            .sync(`${rootDir}/source/editor/${type}/*/${fileGlob}.${fileExt}`)
+        return safeGlobSync(`${rootDir}/source/editor/${type}/*/${fileGlob}.${fileExt}`)
             .reduce((obj, el) => {
-                const name = path.basename(path.dirname(el));
+                const name = pathModule.basename(pathModule.dirname(el));
                 obj[`${type}/${name}/${fileGlob}`] = el;
                 return obj;
             }, {});
