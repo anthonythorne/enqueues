@@ -25,12 +25,6 @@ use function Enqueues\get_block_editor_categories;
 class BlockEditorRegistrationController extends Controller {
 
 	/**
-	 * Directory paths.
-	 */
-	protected $directory;
-	protected $directory_uri;
-
-	/**
 	 * Register hooks and initialize properties.
 	 */
 	public function set_up() {
